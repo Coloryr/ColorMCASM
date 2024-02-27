@@ -1,4 +1,4 @@
-package coloryr.colormc;
+package com.coloryr.colormc;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;

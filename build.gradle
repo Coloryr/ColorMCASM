@@ -3,8 +3,8 @@ plugins {
     id 'com.github.johnrengelman.shadow' version '8.1.1'
 }
 
-group = 'org.example'
-version = '1.0-SNAPSHOT'
+group = 'com.coloryr.colormc'
+version = '1.0'
 
 repositories {
     mavenCentral()
@@ -24,25 +24,21 @@ dependencies {
 //    compileOnly "io.github.llamalad7:mixinextras-common:0.3.5"
 
 //    compileOnly 'org.lwjgl.lwjgl:lwjgl:2.9.4-nightly-20150209'
-    compileOnly 'io.netty:netty-all:4.1.9.Final'
+    compileOnly 'io.netty:netty-all:4.1.50.Final'
 
 //    testImplementation platform('org.junit:junit-bom:5.9.1')
 //    testImplementation 'org.junit.jupiter:junit-jupiter'
 }
 
-test {
-    useJUnitPlatform()
-}
-
 shadowJar {
-
+    relocate 'org.objectweb.asm', 'com.coloryr.org.objectweb.asm'
 }
 
 jar {
     manifest {
         attributes(
-                'Premain-Class': 'coloryr.colormc.ColorMCASM',
-                //'Agent-Class': 'coloryr.colormc.ColorMCASM',
+                'Premain-Class': 'com.coloryr.colormc.ColorMCASM',
+                //'Agent-Class': 'com.coloryr.colormc.ColorMCASM',
                 //'Can-Redefine-Classes': 'true',
                 //'Can-Retransform-Classes': 'false',
         )

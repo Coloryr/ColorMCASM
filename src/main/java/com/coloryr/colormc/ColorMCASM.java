@@ -1,7 +1,7 @@
-package coloryr.colormc;
+package com.coloryr.colormc;
 
-import coloryr.colormc.asms.Lwjgl2Asm;
-import coloryr.colormc.asms.Lwjgl3Asm;
+import com.coloryr.colormc.asms.Lwjgl2Asm;
+import com.coloryr.colormc.asms.Lwjgl3Asm;
 
 import java.lang.instrument.Instrumentation;
 import java.nio.charset.StandardCharsets;
@@ -11,8 +11,10 @@ public class ColorMCASM {
     public static String uuid;
     public static byte[] uuidBytes;
     public static boolean run;
+    public static boolean init;
 
     public static void init() {
+        init = true;
         String port = System.getProperty("colormc.mixin.port");
         uuid = System.getProperty("colormc.mixin.uuid");
         if (port == null || uuid == null) {
@@ -30,25 +32,7 @@ public class ColorMCASM {
     }
 
     public static void premain(String agentArgs, Instrumentation inst) {
-        ColorMCASM.init();
-        if (!run) {
-            return;
-        }
-
         inst.addTransformer(new Lwjgl2Asm());
         inst.addTransformer(new Lwjgl3Asm());
-        //final ByteBuddy byteBuddy = new ByteBuddy().with(TypeValidation.of(false));
-
-//        new AgentBuilder.Default(byteBuddy)
-//                .type(ElementMatchers.named("org.lwjgl.input.Mouse"))
-//                .transform(new Lwjgl2Asm())
-//                .installOn(inst);
-
-//        new AgentBuilder.Default(byteBuddy)
-//                .type(ElementMatchers.named("org.lwjgl.glfw.GLFW"))
-//                .transform(new Lwjgl3Asm())
-//                .installOn(inst);
-
-
     }
 }

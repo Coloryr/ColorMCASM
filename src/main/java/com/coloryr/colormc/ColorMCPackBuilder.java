@@ -1,4 +1,4 @@
-package coloryr.colormc;
+package com.coloryr.colormc;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -15,6 +15,15 @@ public class ColorMCPackBuilder {
     }
 
     public static void setGrabbed(boolean grab) {
+        if (!ColorMCASM.run) {
+            if (ColorMCASM.init) {
+                return;
+            }
+            ColorMCASM.init();
+            if (!ColorMCASM.run) {
+                return;
+            }
+        }
         ColorMCASM.client.sendMessage(ColorMCPackBuilder.buildGrabbed(grab));
     }
 
