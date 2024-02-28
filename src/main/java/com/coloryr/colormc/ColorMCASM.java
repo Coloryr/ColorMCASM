@@ -2,9 +2,11 @@ package com.coloryr.colormc;
 
 import com.coloryr.colormc.asms.Lwjgl2Asm;
 import com.coloryr.colormc.asms.Lwjgl3Asm;
+import com.coloryr.colormc.asms.SocketAsm;
 
 import java.lang.instrument.Instrumentation;
 import java.nio.charset.StandardCharsets;
+import java.util.jar.JarFile;
 
 public class ColorMCASM {
     public static NettyClient client;
@@ -34,5 +36,6 @@ public class ColorMCASM {
     public static void premain(String agentArgs, Instrumentation inst) {
         inst.addTransformer(new Lwjgl2Asm());
         inst.addTransformer(new Lwjgl3Asm());
+        inst.addTransformer(new SocketAsm());
     }
 }
