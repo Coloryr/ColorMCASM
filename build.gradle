@@ -42,9 +42,9 @@ jar {
     manifest {
         attributes(
                 'Premain-Class': 'com.coloryr.colormc.ColorMCASM',
-                'Agent-Class': 'com.coloryr.colormc.ColorMCASM',
-                'Can-Redefine-Classes': 'true',
-                'Can-Retransform-Classes': 'true',
+//                'Agent-Class': 'com.coloryr.colormc.ColorMCASM',
+//                'Can-Redefine-Classes': 'true',
+//                'Can-Retransform-Classes': 'true',
         )
     }
 }

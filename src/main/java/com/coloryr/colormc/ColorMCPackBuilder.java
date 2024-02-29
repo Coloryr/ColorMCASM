@@ -14,13 +14,13 @@ public class ColorMCPackBuilder {
         System.out.println("ColorMCPackBuilder is being initialized.");
     }
 
-    public static  void init(){
+    public static void init() {
 
     }
 
     private static final Queue<InfoObj> packetMap = new ConcurrentLinkedDeque<>();
 
-    static class InfoObj{
+    static class InfoObj {
         public String ip;
         public String port;
         public byte[] info;
@@ -77,6 +77,7 @@ public class ColorMCPackBuilder {
     }
 
     public static void setGrabbed(boolean grab) {
+        System.out.println("set grab: " + grab);
         if (!ColorMCASM.run) {
             if (ColorMCASM.init) {
                 return;

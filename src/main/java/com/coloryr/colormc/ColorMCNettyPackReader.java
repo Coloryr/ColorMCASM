@@ -7,7 +7,7 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
 import java.nio.charset.StandardCharsets;
 
 public class ColorMCNettyPackReader extends ChannelInboundHandlerAdapter {
-    private String readString(ByteBuf buf){
+    private String readString(ByteBuf buf) {
         int len = buf.readInt();
         byte[] temp = new byte[len];
         buf.readBytes(temp);

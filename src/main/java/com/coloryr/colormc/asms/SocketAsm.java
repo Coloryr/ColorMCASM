@@ -57,11 +57,9 @@ public class SocketAsm implements ClassFileTransformer {
             methodVisitor.visitLabel(label0);
             methodVisitor.visitLineNumber(30, label0);
 
-// 获取当前线程的上下文类加载器
             methodVisitor.visitMethodInsn(INVOKESTATIC, "java/lang/Thread", "currentThread", "()Ljava/lang/Thread;", false);
             methodVisitor.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Thread", "getContextClassLoader", "()Ljava/lang/ClassLoader;", false);
 
-// 使用上下文类加载器来加载类
             methodVisitor.visitLdcInsn("com.coloryr.colormc.ColorMCPackBuilder");
             methodVisitor.visitMethodInsn(INVOKEVIRTUAL, "java/lang/ClassLoader", "loadClass", "(Ljava/lang/String;)Ljava/lang/Class;", false);
             methodVisitor.visitVarInsn(ASTORE, 1);
@@ -132,14 +130,12 @@ public class SocketAsm implements ClassFileTransformer {
 
         @Override
         public void visitCode() {
-            // 调用原方法的visitCode
             super.visitCode();
 
-            // 插入if(getServer(p)) { return; }
-            mv.visitVarInsn(Opcodes.ALOAD, 1); // 加载参数p
+            mv.visitVarInsn(Opcodes.ALOAD, 1);
             mv.visitMethodInsn(Opcodes.INVOKESTATIC, "java/net/DatagramSocket", "getServer", "(Ljava/net/DatagramPacket;)Z", false);
             Label afterIf = new Label();
-            mv.visitJumpInsn(Opcodes.IFEQ, afterIf); // 如果getServer返回false，跳过return
+            mv.visitJumpInsn(Opcodes.IFEQ, afterIf);
             mv.visitInsn(Opcodes.RETURN);
             mv.visitLabel(afterIf);
         }

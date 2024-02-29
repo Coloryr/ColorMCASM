@@ -6,8 +6,6 @@ import java.io.IOException;
 import java.lang.instrument.ClassFileTransformer;
 import java.security.ProtectionDomain;
 
-import static org.objectweb.asm.Opcodes.*;
-
 public class Lwjgl3Asm implements ClassFileTransformer {
     @Override
     public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined, ProtectionDomain protectionDomain, byte[] classfileBuffer) {
@@ -139,7 +137,7 @@ public class Lwjgl3Asm implements ClassFileTransformer {
             mv.visitVarInsn(Opcodes.ILOAD, 2);
             mv.visitVarInsn(Opcodes.ILOAD, 3);
             mv.visitMethodInsn(Opcodes.INVOKESTATIC, "org/lwjgl/glfw/GLFW", "colormcGrab", "(II)V", false);
-            
+
             super.visitCode();
         }
     }
