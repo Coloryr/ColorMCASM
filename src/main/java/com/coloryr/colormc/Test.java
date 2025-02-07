@@ -25,6 +25,17 @@ public class Test {
         }
     }
 
+    public static void colormcAddWindow(long temp) {
+        try {
+            Class<?> colorMCPackBuilderClass = Class.forName("com.coloryr.colormc.ColorMCASM");
+            Method method = colorMCPackBuilderClass.getMethod("addWindow", long.class);
+            method.invoke(null, temp);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     public static boolean getServer(DatagramPacket p) {
         try {
             Class<?> colorMCPackBuilderClass = Class.forName("com.coloryr.colormc.ColorMCPackBuilder");

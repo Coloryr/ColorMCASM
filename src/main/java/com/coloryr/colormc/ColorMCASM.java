@@ -6,6 +6,8 @@ import com.coloryr.colormc.asms.SocketAsm;
 
 import java.lang.instrument.Instrumentation;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ColorMCASM {
     public static NettyClient client;
@@ -14,30 +16,46 @@ public class ColorMCASM {
     public static boolean run;
     public static boolean init;
 
+    public static boolean isLwjgl3;
+
+    public static List<Long> windowList = new ArrayList<>();
+
+    public static void addWindow(long window) {
+        isLwjgl3 = true;
+        windowList.add(window);
+        System.out.println("add window: " + window);
+        if (!ColorMCASM.run) {
+            if (ColorMCASM.init) {
+                return;
+            }
+            ColorMCASM.init();
+        }
+    }
+
     public static void init() {
-        System.out.println("ColorMC ASM init");
+        System.out.println("[ColorMC ASM] init asm");
         init = true;
         String port = System.getProperty("colormc.mixin.port");
         uuid = System.getProperty("colormc.mixin.uuid");
         if (port == null || uuid == null) {
-            System.out.println("ColorMC ASM lost port or uuid or jar, disabled.");
+            System.out.println("[ColorMC ASM] lost port or uuid or jar, disabled.");
             return;
         }
         uuidBytes = ColorMCASM.uuid.getBytes(StandardCharsets.UTF_8);
-        System.out.println("ColorMC ASM run in " + port + " " + uuid);
+        System.out.println("[ColorMC ASM] run in " + port + " " + uuid);
         int port1 = Integer.parseInt(port);
         try {
             client = new NettyClient("127.0.0.1", port1);
-            System.out.println("ColorMC ASM environment initialized.");
+            System.out.println("[ColorMC ASM] environment initialized.");
             run = true;
         } catch (Exception e) {
-            System.out.println("ColorMC ASM environment init fail.");
+            System.out.println("[ColorMC ASM] environment init fail.");
             e.printStackTrace();
         }
     }
 
     public static void premain(String agentArgs, Instrumentation inst) {
-        System.out.println("ColorMC ASM start");
+        System.out.println("[ColorMC ASM] start patch class");
         inst.addTransformer(new Lwjgl2Asm());
         inst.addTransformer(new Lwjgl3Asm());
         inst.addTransformer(new SocketAsm());

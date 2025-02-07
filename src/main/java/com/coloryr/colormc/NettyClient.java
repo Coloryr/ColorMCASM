@@ -9,9 +9,9 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 
 public class NettyClient {
 
-    private String host;
-    private Integer port;
-    private Bootstrap bootstrap;
+    private final String host;
+    private final Integer port;
+    private final Bootstrap bootstrap;
     private Channel channel;
 
     public NettyClient(String host, Integer port) throws Exception {
@@ -31,7 +31,7 @@ public class NettyClient {
                     @Override
                     protected void initChannel(SocketChannel ch) {
                         ChannelPipeline pipeline = ch.pipeline();
-                        pipeline.addLast(new ColorMCNettyPackReader());
+                        pipeline.addLast(new ColorMCNettyPackChannel());
                     }
                 });
     }

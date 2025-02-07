@@ -11,7 +11,7 @@ public class Lwjgl2Asm implements ClassFileTransformer {
     public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined, ProtectionDomain protectionDomain, byte[] classfileBuffer) {
         try {
             if ("org.lwjgl.input.Mouse".equals(className.replace("/", "."))) {
-                System.out.println("ColorMC Mixin Lwjgl2 > org.lwjgl.input.Mouse done");
+                System.out.println("[ColorMC ASM] Mixin Lwjgl2 > org.lwjgl.input.Mouse done");
                 ClassReader cr = new ClassReader(className);
                 ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
                 Lwjgl2Adpter lwjgl2Adpter = new Lwjgl2Adpter(cw);
@@ -21,7 +21,7 @@ public class Lwjgl2Asm implements ClassFileTransformer {
             }
             return null;
         } catch (IOException e) {
-            System.out.println("transform error " + className);
+            System.out.println("[ColorMC ASM] transform error " + className);
             e.printStackTrace();
         }
         return null;
@@ -38,7 +38,7 @@ public class Lwjgl2Asm implements ClassFileTransformer {
                                          String[] exceptions) {
             MethodVisitor mv = cv.visitMethod(access, name, descriptor, signature, exceptions);
             if (name.equals("setGrabbed")) {
-                System.out.println("ColorMC Mixin > setGrabbed done");
+                System.out.println("[ColorMC ASM] Mixin > setGrabbed done");
                 return new GrabbedMethodVisitor(mv);
             }
 

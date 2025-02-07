@@ -11,7 +11,7 @@ public class SocketAsm implements ClassFileTransformer {
     public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined, ProtectionDomain protectionDomain, byte[] classfileBuffer) {
         try {
             if ("java.net.DatagramSocket".equals(className.replace("/", "."))) {
-                System.out.println("ColorMC Mixin > java.net.DatagramSocket done");
+                System.out.println("[ColorMC ASM] Mixin > java.net.DatagramSocket done");
                 ClassReader cr = new ClassReader(className);
                 ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
                 SocketAdpter adpter = new SocketAdpter(cw);
@@ -38,7 +38,7 @@ public class SocketAsm implements ClassFileTransformer {
                                          String[] exceptions) {
             MethodVisitor mv = cv.visitMethod(access, name, descriptor, signature, exceptions);
             if ("receive".equals(name) && "(Ljava/net/DatagramPacket;)V".equals(descriptor)) {
-                System.out.println("ColorMC Mixin DatagramSocket > receive done");
+                System.out.println("[ColorMC ASM] Mixin DatagramSocket > receive done");
                 return new GrabbedMethodVisitor(mv);
             }
 
