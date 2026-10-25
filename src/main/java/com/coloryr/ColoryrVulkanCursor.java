@@ -69,12 +69,12 @@ public final class ColoryrVulkanCursor {
         }
     }
 
-    public static void surfaceCreated(int result, Class<?> api, long window, long output, boolean sdl) {
+    public static void surfaceCreated(int result, Class<?> api, long window, long output) {
         if (!ColoryrCursor.ENABLED) return;
         try {
             invoke(api.getClassLoader(), "surfaceCreated",
-                    new Class<?>[]{int.class, Class.class, long.class, long.class, boolean.class},
-                    result, api, window, output, sdl);
+                    new Class<?>[]{int.class, Class.class, long.class, long.class},
+                    result, api, window, output);
         } catch (Throwable error) {
             report(error);
         }
@@ -171,21 +171,17 @@ public final class ColoryrVulkanCursor {
         }
     }
 
-    public static double[] frame(Class<?> api, long window, int width, int height, boolean sdl) throws Exception {
-        ColoryrCursorFrame frame = sdl
-                ? ColoryrSdlCursor.frame(api.getClassLoader(), window, width, height)
-                : ColoryrCursor.glfwFrame(api.getClassLoader(), window, width, height);
+    public static double[] frame(Class<?> api, long window, int width, int height) throws Exception {
+        ColoryrCursorFrame frame = ColoryrCursor.glfwFrame(api.getClassLoader(), window, width, height);
         return frame == null ? null : new double[]{frame.x, frame.y, frame.sizeX, frame.sizeY};
     }
 
-    public static void activate(long window, boolean sdl) throws Exception {
-        if (sdl) ColoryrSdlCursor.activate(window);
-        else ColoryrCursor.activateGlfw(window);
+    public static void activate(long window) throws Exception {
+        ColoryrCursor.activateGlfw(window);
     }
 
-    public static void restore(long window, boolean sdl) {
-        if (sdl) ColoryrSdlCursor.restore(window);
-        else ColoryrCursor.restoreGlfw(window);
+    public static void restore(long window) {
+        ColoryrCursor.restoreGlfw(window);
     }
 
     public static ByteBuffer texture(int[] dimensions, float[] hotspot) throws Exception {

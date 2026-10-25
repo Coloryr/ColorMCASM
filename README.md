@@ -18,9 +18,7 @@ swapchain 上覆盖贴图，并把游戏仍需要的系统光标模式临时替�
 
 - LWJGL2 `Display.swapBuffers()`（GL2）
 - GLFW `glfwSwapBuffers()`（GL3）
-- SDL `SDL_GL_SwapWindow()`（GL）
 - GLFW Vulkan `glfwCreateWindowSurface` + `vkQueuePresentKHR`
-- SDL Vulkan `SDL_Vulkan_CreateSurface` + `vkQueuePresentKHR`
 
 LWJGL2 的 Display / Mouse / Cursor 光标调用，以及共享 GL 渲染器的调用，使用 ASM 在
 初始化时生成强类型桥接类。每帧通过普通接口调用进入游戏提供的 LWJGL 方法，不再执行
@@ -43,7 +41,7 @@ LWJGL2 的 Display / Mouse / Cursor 光标调用，以及共享 GL 渲染器的�
 Vulkan 需要支持混合的颜色附件、可执行 graphics 的呈现队列、普通单层且无旋转的交换链，
 以及一次呈现一个交换链。受保护交换链、额外的创建扩展链、共享呈现模式或不满足上述
 条件的后端会保留系统光标。纹理经过 staging buffer 一次性上传，逐帧绘制不做 CPU 图像
-读回，也不逐帧等待整个设备空闲。SDL 路径处理光标渲染及显隐，输入仍由现有控制模块负责。
+读回，也不逐帧等待整个设备空闲。
 
 ## 构建和测试
 
@@ -57,12 +55,12 @@ $env:PATH = "$env:JAVA_HOME/bin;$env:PATH"
 
 测试包括生成桥接的隔离类加载与直接调用检查、真实 GL3.2 core、GL2 兼容路径、
 透明 PNG 和热点上传、GL 状态恢复、
-真实 GLFW/Vulkan 交换链呈现和像素读回，以及 SDL OpenGL 和光标显隐。
+真实 GLFW/Vulkan 交换链呈现和像素读回。
 `test` 使用 LWJGL 3.3.3，`lwjgl2Test` 使用 2.9.1，`modernTest` 使用 3.4.3。
 没有图形环境的主机会跳过需要对应驱动的测试，应检查测试报告中的 skipped 数量。
 
-本机 Windows 上三组测试实际执行通过。检查了本地 26.1.2 和官方 26.3 的后端入口，
-但尚未逐个启动 Minecraft 1.7.10 至 26.3，也未覆盖所有 mod loader 和操作系统。
+本机 Windows 上三组测试实际执行通过。支持范围为上述 LWJGL2 / GLFW 入口，
+尚未逐个启动各版本 Minecraft，也未覆盖所有 mod loader 和操作系统。
 产物为 `build/libs/ColoryrASM-1.2-all.jar`，不打包 LWJGL、shaderc 或原生库。
 
 修改 GLSL 或重新生成默认 PNG 后，运行 `./gradlew.bat compileCursorAssets` 再构建。

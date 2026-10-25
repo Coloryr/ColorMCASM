@@ -4,6 +4,7 @@ import com.coloryr.asms.CursorAsm;
 import com.coloryr.asms.Lwjgl3Asm;
 import org.junit.jupiter.api.Test;
 import org.lwjgl.glfw.GLFW;
+import org.lwjgl.glfw.GLFWVulkan;
 import org.lwjgl.vulkan.KHRSwapchain;
 import org.lwjgl.vulkan.KHRSurface;
 import org.lwjgl.vulkan.VK10;
@@ -129,6 +130,10 @@ class CursorAsmTest {
         byte[] vk10 = resource(VK10.class, "VK10.class");
         byte[] swapchain = resource(KHRSwapchain.class, "KHRSwapchain.class");
         CursorAsm transformer = new CursorAsm();
+        byte[] glfwVulkan = transformer.transform(null, "org/lwjgl/glfw/GLFWVulkan", null, null,
+                resource(GLFWVulkan.class, "GLFWVulkan.class"));
+        assertValid(glfwVulkan);
+        assertEquals(1, countCalls(read(glfwVulkan), "nglfwCreateWindowSurface", "surfaceCreated"));
         byte[] patchedVk10 = transformer.transform(null, "org/lwjgl/vulkan/VK10", null, null, vk10);
         byte[] patchedSwapchain = transformer.transform(null, "org/lwjgl/vulkan/KHRSwapchain", null, null, swapchain);
         assertValid(patchedVk10);

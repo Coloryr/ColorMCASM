@@ -28,10 +28,10 @@ public final class ColoryrVulkanBackend {
     private ColoryrVulkanBackend() {
     }
 
-    public static void surfaceCreated(int result, Class<?> api, long window, long output, boolean sdl) {
-        if ((sdl ? result != 0 : result == VK_SUCCESS) && output != 0) {
+    public static void surfaceCreated(int result, Class<?> api, long window, long output) {
+        if (result == VK_SUCCESS && output != 0) {
             long surface = MemoryUtil.memGetLong(output);
-            if (surface != 0) SURFACES.put(surface, new Surface(api, window, sdl));
+            if (surface != 0) SURFACES.put(surface, new Surface(api, window));
         }
     }
 
@@ -177,24 +177,22 @@ public final class ColoryrVulkanBackend {
     private static final class Surface {
         final Class<?> api;
         final long window;
-        final boolean sdl;
 
-        Surface(Class<?> api, long window, boolean sdl) {
+        Surface(Class<?> api, long window) {
             this.api = api;
             this.window = window;
-            this.sdl = sdl;
         }
 
         double[] frame(int width, int height) throws Exception {
-            return ColoryrVulkanCursor.frame(api, window, width, height, sdl);
+            return ColoryrVulkanCursor.frame(api, window, width, height);
         }
 
         void activate() throws Exception {
-            ColoryrVulkanCursor.activate(window, sdl);
+            ColoryrVulkanCursor.activate(window);
         }
 
         void restore() {
-            ColoryrVulkanCursor.restore(window, sdl);
+            ColoryrVulkanCursor.restore(window);
         }
     }
 

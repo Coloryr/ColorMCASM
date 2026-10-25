@@ -74,7 +74,7 @@ dependencies {
     modernTestImplementation platform('org.junit:junit-bom:5.10.2')
     modernTestImplementation 'org.junit.jupiter:junit-jupiter'
     modernTestImplementation 'org.ow2.asm:asm-util:9.6'
-    ['lwjgl', 'lwjgl-glfw', 'lwjgl-opengl', 'lwjgl-vulkan', 'lwjgl-sdl'].each {
+    ['lwjgl', 'lwjgl-glfw', 'lwjgl-opengl', 'lwjgl-vulkan'].each {
         modernTestImplementation "org.lwjgl:${it}:3.4.3"
         if (it != 'lwjgl-vulkan') {
             modernTestRuntimeOnly "org.lwjgl:${it}:3.4.3:natives-${nativePlatform}${nativeSuffix}"

@@ -93,7 +93,7 @@ class VulkanCursorTest {
                 LongBuffer output = stack.mallocLong(1);
                 check(GLFWVulkan.glfwCreateWindowSurface(instance, window, null, output));
                 surface = output.get(0);
-                ColoryrVulkanCursor.surfaceCreated(VK_SUCCESS, GLFW.class, window, MemoryUtil.memAddress(output), false);
+                ColoryrVulkanCursor.surfaceCreated(VK_SUCCESS, GLFW.class, window, MemoryUtil.memAddress(output));
                 IntBuffer count = stack.ints(0);
                 check(vkEnumeratePhysicalDevices(instance, count, null));
                 PointerBuffer physicals = stack.mallocPointer(count.get(0));
