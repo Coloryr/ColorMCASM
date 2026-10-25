@@ -19,6 +19,21 @@ repositories {
     }
 }
 
+sourceSets {
+    lwjgl2Test {
+        compileClasspath += sourceSets.main.output
+        runtimeClasspath += sourceSets.main.output
+    }
+    modernTest {
+        compileClasspath += sourceSets.main.output
+        runtimeClasspath += sourceSets.main.output
+    }
+}
+
+configurations {
+    lwjgl2Natives
+}
+
 dependencies {
     implementation 'org.ow2.asm:asm:9.6'
 //    implementation 'net.bytebuddy:byte-buddy:1.14.12'
@@ -33,14 +48,77 @@ dependencies {
 //    只是为了让光标回调包装类能编译，运行时由游戏提供对应版本
     compileOnly 'org.lwjgl:lwjgl:3.3.3'
     compileOnly 'org.lwjgl:lwjgl-glfw:3.3.3'
+    compileOnly 'org.lwjgl:lwjgl-vulkan:3.3.3'
     compileOnly 'io.netty:netty-all:4.1.117.Final'
 
-//    testImplementation platform('org.junit:junit-bom:5.9.1')
-//    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation platform('org.junit:junit-bom:5.10.2')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation 'org.ow2.asm:asm-util:9.6'
+    testImplementation 'org.lwjgl:lwjgl:3.3.3'
+    testImplementation 'org.lwjgl:lwjgl-glfw:3.3.3'
+    testImplementation 'org.lwjgl:lwjgl-opengl:3.3.3'
+    testImplementation 'org.lwjgl:lwjgl-vulkan:3.3.3'
+    testImplementation 'org.lwjgl:lwjgl-shaderc:3.3.3'
+    def nativePlatform = System.getProperty('os.name').toLowerCase().contains('win') ? 'windows'
+            : System.getProperty('os.name').toLowerCase().contains('mac') ? 'macos' : 'linux'
+    def nativeArch = System.getProperty('os.arch')
+    def nativeSuffix = nativeArch == 'aarch64' || nativeArch == 'arm64' ? '-arm64' : ''
+    ['lwjgl', 'lwjgl-glfw', 'lwjgl-opengl', 'lwjgl-shaderc'].each {
+        testRuntimeOnly "org.lwjgl:${it}:3.3.3:natives-${nativePlatform}${nativeSuffix}"
+    }
+    lwjgl2TestImplementation platform('org.junit:junit-bom:5.10.2')
+    lwjgl2TestImplementation 'org.junit.jupiter:junit-jupiter'
+    lwjgl2TestImplementation 'org.ow2.asm:asm-util:9.6'
+    lwjgl2TestImplementation 'org.lwjgl.lwjgl:lwjgl:2.9.1'
+    lwjgl2Natives "org.lwjgl.lwjgl:lwjgl-platform:2.9.1:natives-${nativePlatform == 'macos' ? 'osx' : nativePlatform}"
+    modernTestImplementation platform('org.junit:junit-bom:5.10.2')
+    modernTestImplementation 'org.junit.jupiter:junit-jupiter'
+    modernTestImplementation 'org.ow2.asm:asm-util:9.6'
+    ['lwjgl', 'lwjgl-glfw', 'lwjgl-opengl', 'lwjgl-vulkan', 'lwjgl-sdl'].each {
+        modernTestImplementation "org.lwjgl:${it}:3.4.3"
+        if (it != 'lwjgl-vulkan') {
+            modernTestRuntimeOnly "org.lwjgl:${it}:3.4.3:natives-${nativePlatform}${nativeSuffix}"
+        }
+    }
+}
+
+test {
+    useJUnitPlatform()
+    systemProperty 'org.lwjgl.system.stackSize', '1024'
+}
+
+tasks.register('compileCursorAssets', JavaExec) {
+    dependsOn tasks.named('testClasses')
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'com.coloryr.CursorAssetCompiler'
+}
+
+tasks.register('extractLwjgl2Natives', Sync) {
+    from { configurations.lwjgl2Natives.collect { zipTree(it) } }
+    into layout.buildDirectory.dir('lwjgl2-natives')
+}
+
+tasks.register('lwjgl2Test', Test) {
+    dependsOn tasks.named('extractLwjgl2Natives')
+    testClassesDirs = sourceSets.lwjgl2Test.output.classesDirs
+    classpath = sourceSets.lwjgl2Test.runtimeClasspath + configurations.runtimeClasspath
+    systemProperty 'org.lwjgl.librarypath', layout.buildDirectory.dir('lwjgl2-natives').get().asFile.absolutePath
+    useJUnitPlatform()
+}
+
+tasks.register('modernTest', Test) {
+    dependsOn tasks.named('testClasses')
+    testClassesDirs = files(sourceSets.test.output.classesDirs, sourceSets.modernTest.output.classesDirs)
+    classpath = sourceSets.modernTest.runtimeClasspath + sourceSets.test.output
+    systemProperty 'org.lwjgl.system.stackSize', '1024'
+    useJUnitPlatform()
 }
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = "UTF-8"
+    if (JavaVersion.current().isJava9Compatible()) {
+        options.release = 8
+    }
     // 兼容 Java 8 的 source/target 在新 JDK 上会提示过时，这里不显示
     options.compilerArgs.add("-Xlint:-options")
 }

@@ -244,6 +244,12 @@ public class Lwjgl3Asm implements ClassFileTransformer {
             mv.visitVarInsn(Opcodes.ILOAD, 2);
             mv.visitVarInsn(Opcodes.ILOAD, 3);
             mv.visitMethodInsn(Opcodes.INVOKESTATIC, "org/lwjgl/glfw/GLFW", "coloryrGrab", "(II)V", false);
+            mv.visitVarInsn(Opcodes.LLOAD, 0);
+            mv.visitVarInsn(Opcodes.ILOAD, 2);
+            mv.visitVarInsn(Opcodes.ILOAD, 3);
+            mv.visitMethodInsn(Opcodes.INVOKESTATIC, "com/coloryr/ColoryrCursor",
+                    "cursorMode", "(JII)I", false);
+            mv.visitVarInsn(Opcodes.ISTORE, 3);
         }
     }
 
