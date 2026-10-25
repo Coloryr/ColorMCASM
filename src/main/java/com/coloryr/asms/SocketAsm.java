@@ -1,4 +1,4 @@
-package com.coloryr.colormc.asms;
+package com.coloryr.asms;
 
 import org.objectweb.asm.*;
 
@@ -11,7 +11,7 @@ public class SocketAsm implements ClassFileTransformer {
     public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined, ProtectionDomain protectionDomain, byte[] classfileBuffer) {
         try {
             if ("java.net.DatagramSocket".equals(className.replace("/", "."))) {
-                System.out.println("[ColorMC ASM] Mixin > java.net.DatagramSocket done");
+                System.out.println("[ColoryrASM] Mixin > java.net.DatagramSocket done");
                 ClassReader cr = new ClassReader(className);
                 ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
                 SocketAdpter adpter = new SocketAdpter(cw);
@@ -38,7 +38,7 @@ public class SocketAsm implements ClassFileTransformer {
                                          String[] exceptions) {
             MethodVisitor mv = cv.visitMethod(access, name, descriptor, signature, exceptions);
             if ("receive".equals(name) && "(Ljava/net/DatagramPacket;)V".equals(descriptor)) {
-                System.out.println("[ColorMC ASM] Mixin DatagramSocket > receive done");
+                System.out.println("[ColoryrASM] Mixin DatagramSocket > receive done");
                 return new GrabbedMethodVisitor(mv);
             }
 
@@ -60,7 +60,7 @@ public class SocketAsm implements ClassFileTransformer {
             methodVisitor.visitMethodInsn(INVOKESTATIC, "java/lang/Thread", "currentThread", "()Ljava/lang/Thread;", false);
             methodVisitor.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Thread", "getContextClassLoader", "()Ljava/lang/ClassLoader;", false);
 
-            methodVisitor.visitLdcInsn("com.coloryr.colormc.ColorMCPackBuilder");
+            methodVisitor.visitLdcInsn("com.coloryr.ColoryrPackBuilder");
             methodVisitor.visitMethodInsn(INVOKEVIRTUAL, "java/lang/ClassLoader", "loadClass", "(Ljava/lang/String;)Ljava/lang/Class;", false);
             methodVisitor.visitVarInsn(ASTORE, 1);
 
@@ -114,7 +114,7 @@ public class SocketAsm implements ClassFileTransformer {
 
             Label label7 = new Label();
             methodVisitor.visitLabel(label7);
-            methodVisitor.visitLocalVariable("colorMCPackBuilderClass", "Ljava/lang/Class;", "Ljava/lang/Class<*>;", label3, label2, 1);
+            methodVisitor.visitLocalVariable("coloryrPackBuilderClass", "Ljava/lang/Class;", "Ljava/lang/Class<*>;", label3, label2, 1);
             methodVisitor.visitLocalVariable("method", "Ljava/lang/reflect/Method;", null, label4, label2, 2);
             methodVisitor.visitLocalVariable("e", "Ljava/lang/Exception;", null, label5, label6, 1);
             methodVisitor.visitLocalVariable("p", "Ljava/net/DatagramPacket;", null, label0, label7, 0);

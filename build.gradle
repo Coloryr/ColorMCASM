@@ -3,8 +3,14 @@ plugins {
     id 'com.github.johnrengelman.shadow' version '8.1.1'
 }
 
-group = 'com.coloryr.colormc'
-version = '1.1'
+group = 'com.coloryr.coloryrasm'
+version = '1.2'
+
+// 游戏侧最低到 Java 8（1.12.2 及更老版本），产物必须保持 52.0 的字节码
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
 
 repositories {
     mavenCentral()
@@ -24,6 +30,9 @@ dependencies {
 //    compileOnly "io.github.llamalad7:mixinextras-common:0.3.5"
 
 //    compileOnly 'org.lwjgl.lwjgl:lwjgl:2.9.4-nightly-20150209'
+//    只是为了让光标回调包装类能编译，运行时由游戏提供对应版本
+    compileOnly 'org.lwjgl:lwjgl:3.3.3'
+    compileOnly 'org.lwjgl:lwjgl-glfw:3.3.3'
     compileOnly 'io.netty:netty-all:4.1.117.Final'
 
 //    testImplementation platform('org.junit:junit-bom:5.9.1')
@@ -32,6 +41,8 @@ dependencies {
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = "UTF-8"
+    // 兼容 Java 8 的 source/target 在新 JDK 上会提示过时，这里不显示
+    options.compilerArgs.add("-Xlint:-options")
 }
 
 shadowJar {
@@ -41,8 +52,8 @@ shadowJar {
 jar {
     manifest {
         attributes(
-                'Premain-Class': 'com.coloryr.colormc.ColorMCASM',
-//                'Agent-Class': 'com.coloryr.colormc.ColorMCASM',
+                'Premain-Class': 'com.coloryr.ColoryrASM',
+//                'Agent-Class': 'com.coloryr.coloryrasm.coloryrasmASM',
 //                'Can-Redefine-Classes': 'true',
 //                'Can-Retransform-Classes': 'true',
         )

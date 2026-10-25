@@ -1,3 +1,3 @@
-# ColorMCASM
+# coloryrasmASM
 
-通过ASM方式修改游戏，与ColorMC通信
+通过ASM方式修改游戏，与coloryrasm通信

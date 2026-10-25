@@ -1,4 +1,4 @@
-package com.coloryr.colormc;
+package com.coloryr;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
@@ -31,7 +31,7 @@ public class NettyClient {
                     @Override
                     protected void initChannel(SocketChannel ch) {
                         ChannelPipeline pipeline = ch.pipeline();
-                        pipeline.addLast(new ColorMCNettyPackChannel());
+                        pipeline.addLast(new ColoryrNettyPackChannel());
                     }
                 });
     }
