@@ -107,15 +107,15 @@ public final class ColoryrCursor {
         }
         try {
             cursor.init(display);
-            if (!(Boolean) cursor.isCreated.invoke(null)) {
+            if (!cursor.api.isCreated()) {
                 return;
             }
-            if ((Boolean) cursor.isGrabbed.invoke(null)) {
+            if (cursor.api.isGrabbed()) {
                 cursor.restore();
                 return;
             }
-            int width = (Integer) cursor.getWidth.invoke(null);
-            int height = (Integer) cursor.getHeight.invoke(null);
+            int width = cursor.api.getWidth();
+            int height = cursor.api.getHeight();
             if (width <= 0 || height <= 0) {
                 return;
             }
@@ -123,9 +123,9 @@ public final class ColoryrCursor {
                 cursor.renderer = new ColoryrCursorRenderer(display.getClassLoader(), false);
             }
             cursor.hide();
-            if ((Boolean) cursor.isInsideWindow.invoke(null)) {
-                int x = (Integer) cursor.getX.invoke(null);
-                int y = height - 1 - (Integer) cursor.getY.invoke(null);
+            if (cursor.api.isInsideWindow()) {
+                int x = cursor.api.getX();
+                int y = height - 1 - cursor.api.getY();
                 if (x >= 0 && y >= 0 && x < width && y < height) {
                     cursor.renderer.draw(width, height, x, y, SIZE, SIZE);
                 }
@@ -206,9 +206,9 @@ public final class ColoryrCursor {
         try {
             cursor.restore();
             if (cursor.blank != null) {
-                cursor.blank.getClass().getMethod("destroy").invoke(cursor.blank);
+                cursor.api.destroyCursor(cursor.blank);
             }
-            if (cursor.renderer != null && (Boolean) cursor.isCreated.invoke(null)) {
+            if (cursor.renderer != null && cursor.api.isCreated()) {
                 cursor.renderer.close();
             }
         } catch (Throwable e) {
@@ -298,54 +298,49 @@ public final class ColoryrCursor {
         ColoryrCursorRenderer renderer;
         Object blank;
         Object original;
-        Method getWidth;
-        Method getHeight;
-        Method getX;
-        Method getY;
-        Method isCreated;
-        Method isGrabbed;
-        Method isInsideWindow;
-        Method getNativeCursor;
-        Method setNativeCursor;
-        Class<?> cursorClass;
+        ColoryrLwjgl2Api api;
 
         void init(Class<?> display) throws Exception {
-            if (isCreated != null) {
+            if (api != null) {
                 return;
             }
             ClassLoader loader = display.getClassLoader();
             Class<?> mouse = Class.forName("org.lwjgl.input.Mouse", false, loader);
-            cursorClass = Class.forName("org.lwjgl.input.Cursor", false, loader);
-            getWidth = display.getMethod("getWidth");
-            getHeight = display.getMethod("getHeight");
-            getX = mouse.getMethod("getX");
-            getY = mouse.getMethod("getY");
-            isGrabbed = mouse.getMethod("isGrabbed");
-            isInsideWindow = mouse.getMethod("isInsideWindow");
-            getNativeCursor = mouse.getMethod("getNativeCursor");
-            setNativeCursor = mouse.getMethod("setNativeCursor", cursorClass);
-            isCreated = mouse.getMethod("isCreated");
+            Class<?> cursor = Class.forName("org.lwjgl.input.Cursor", false, loader);
+            ColoryrCursorBindings bindings = new ColoryrCursorBindings();
+            bindings.bind("getWidth", display, "getWidth");
+            bindings.bind("getHeight", display, "getHeight");
+            bindings.bind("getX", mouse, "getX");
+            bindings.bind("getY", mouse, "getY");
+            bindings.bind("isGrabbed", mouse, "isGrabbed");
+            bindings.bind("isInsideWindow", mouse, "isInsideWindow");
+            bindings.bind("isCreated", mouse, "isCreated");
+            bindings.bind("getNativeCursor", mouse, "getNativeCursor");
+            bindings.bind("setNativeCursor", mouse, "setNativeCursor", cursor);
+            bindings.bind("minCursorSize", cursor, "getMinCursorSize");
+            bindings.constructor("createCursor", cursor, int.class, int.class, int.class, int.class,
+                    int.class, IntBuffer.class, IntBuffer.class);
+            bindings.bind("destroyCursor", cursor, "destroy");
+            api = bindings.create(ColoryrLwjgl2Api.class, loader);
         }
 
-        void hide() throws Exception {
+        void hide() {
             if (blank == null) {
-                int side = (Integer) cursorClass.getMethod("getMinCursorSize").invoke(null);
+                int side = api.minCursorSize();
                 IntBuffer pixels = ByteBuffer.allocateDirect(side * side * 4)
                         .order(ByteOrder.nativeOrder()).asIntBuffer();
-                blank = cursorClass.getConstructor(int.class, int.class, int.class, int.class,
-                        int.class, IntBuffer.class, IntBuffer.class)
-                        .newInstance(side, side, 0, 0, 1, pixels, null);
+                blank = api.createCursor(side, side, 0, 0, 1, pixels, null);
             }
-            Object current = getNativeCursor.invoke(null);
+            Object current = api.getNativeCursor();
             if (current != blank) {
                 original = current;
-                setNativeCursor.invoke(null, blank);
+                api.setNativeCursor(blank);
             }
         }
 
-        void restore() throws Exception {
-            if (blank != null && (Boolean) isCreated.invoke(null) && getNativeCursor.invoke(null) == blank) {
-                setNativeCursor.invoke(null, original);
+        void restore() {
+            if (blank != null && api.isCreated() && api.getNativeCursor() == blank) {
+                api.setNativeCursor(original);
             }
         }
     }

@@ -3,6 +3,7 @@ package com.coloryr;
 import com.coloryr.asms.CursorAsm;
 import org.junit.jupiter.api.Test;
 import org.lwjgl.BufferUtils;
+import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.ContextCapabilities;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.GLContext;
@@ -27,6 +28,32 @@ import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL20.*;
 
 class Lwjgl2CursorTest {
+    @Test
+    void initializesDirectMouseBridgeAgainstActualLwjgl2WithoutCreatingWindow() throws Exception {
+        assertFalse(Mouse.isCreated());
+        try {
+            ColoryrCursor.beforeDisplaySwap(Display.class);
+            Field stateField = ColoryrCursor.class.getDeclaredField("displayCursor");
+            stateField.setAccessible(true);
+            Object state = stateField.get(null);
+            assertNotNull(state);
+            Field failed = state.getClass().getDeclaredField("failed");
+            failed.setAccessible(true);
+            assertFalse(failed.getBoolean(state), "Real LWJGL 2 methods and cursor constructor must resolve");
+            Field apiField = state.getClass().getDeclaredField("api");
+            apiField.setAccessible(true);
+            ColoryrLwjgl2Api api = (ColoryrLwjgl2Api) apiField.get(state);
+            assertNotNull(api);
+            assertNotSame(Display.class.getClassLoader(), api.getClass().getClassLoader());
+            assertFalse(api.isCreated());
+            assertEquals(Display.getWidth(), api.getWidth());
+            assertEquals(Display.getHeight(), api.getHeight());
+            assertSame(Mouse.getNativeCursor(), api.getNativeCursor());
+        } finally {
+            ColoryrCursor.destroyDisplay(Display.class);
+        }
+    }
+
     @Test
     void transformsActualMinecraft1710LwjglDisplay() throws Exception {
         byte[] bytes;
@@ -61,20 +88,37 @@ class Lwjgl2CursorTest {
 
     @Test
     void rendersGl2FallbackOnOffscreenPbuffer() throws Exception {
+        renderOnOffscreenPbuffer(true);
+    }
+
+    @Test
+    void rendersLwjgl2ModernPathOnOffscreenPbuffer() throws Exception {
+        renderOnOffscreenPbuffer(false);
+    }
+
+    private static void renderOnOffscreenPbuffer(boolean forceGl2) throws Exception {
         assumeTrue((Pbuffer.getCapabilities() & Pbuffer.PBUFFER_SUPPORTED) != 0,
                 "Offscreen LWJGL 2 pbuffers are unavailable");
         Pbuffer buffer = new Pbuffer(128, 128, new PixelFormat(), null);
         ColoryrCursorRenderer renderer = null;
         ContextCapabilities caps = null;
-        boolean originalGl30 = false;
-        Field gl30 = ContextCapabilities.class.getField("OpenGL30");
+        String[] names = {"OpenGL30", "OpenGL40", "GL_ARB_draw_buffers_blend"};
+        Field[] fields = new Field[names.length];
+        boolean[] original = new boolean[names.length];
         try {
             buffer.makeCurrent();
             caps = GLContext.getCapabilities();
-            originalGl30 = caps.OpenGL30;
-            // Exercise the GL 2 path even when the host exposes a newer compatibility context.
-            gl30.setAccessible(true);
-            gl30.setBoolean(caps, false);
+            for (int i = 0; i < names.length; i++) {
+                fields[i] = ContextCapabilities.class.getField(names[i]);
+                fields[i].setAccessible(true);
+                original[i] = fields[i].getBoolean(caps);
+            }
+            if (forceGl2) {
+                // Exercise immediate-mode and non-indexed blend calls on newer drivers too.
+                for (Field field : fields) field.setBoolean(caps, false);
+            } else {
+                assumeTrue(caps.OpenGL30, "OpenGL 3 is unavailable on this LWJGL 2 context");
+            }
             renderer = new ColoryrCursorRenderer(GLContext.class.getClassLoader(), false);
             glClearColor(0.25f, 0.5f, 0.75f, 1);
             glClear(GL_COLOR_BUFFER_BIT);
@@ -107,7 +151,9 @@ class Lwjgl2CursorTest {
                 renderer.close();
             }
             if (caps != null) {
-                gl30.setBoolean(caps, originalGl30);
+                for (int i = 0; i < fields.length; i++) {
+                    if (fields[i] != null) fields[i].setBoolean(caps, original[i]);
+                }
             }
             buffer.destroy();
         }

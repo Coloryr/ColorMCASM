@@ -22,6 +22,12 @@ swapchain 上覆盖贴图，并把游戏仍需要的系统光标模式临时替�
 - GLFW Vulkan `glfwCreateWindowSurface` + `vkQueuePresentKHR`
 - SDL Vulkan `SDL_Vulkan_CreateSurface` + `vkQueuePresentKHR`
 
+LWJGL2 的 Display / Mouse / Cursor 光标调用，以及共享 GL 渲染器的调用，使用 ASM 在
+初始化时生成强类型桥接类。每帧通过普通接口调用进入游戏提供的 LWJGL 方法，不再执行
+`Method.invoke`、字符串方法查表或 `Object...` 参数装箱。能力检测和方法匹配仅在
+初始化时进行；生成类采用 Java 8 字节码，并通过独立子类加载器对接游戏的 LWJGL，
+无需开放 JDK 的 `ClassLoader.defineClass` 反射访问。
+
 可选 JVM 参数：
 
 - `-Dcoloryrasm.cursor.texture=绝对路径`：自定义 RGBA PNG
@@ -49,7 +55,8 @@ $env:PATH = "$env:JAVA_HOME/bin;$env:PATH"
 ./gradlew.bat test lwjgl2Test modernTest shadowJar --console=plain
 ```
 
-测试包括真实 GL3.2 core、GL2 兼容路径、透明 PNG 和热点上传、GL 状态恢复、
+测试包括生成桥接的隔离类加载与直接调用检查、真实 GL3.2 core、GL2 兼容路径、
+透明 PNG 和热点上传、GL 状态恢复、
 真实 GLFW/Vulkan 交换链呈现和像素读回，以及 SDL OpenGL 和光标显隐。
 `test` 使用 LWJGL 3.3.3，`lwjgl2Test` 使用 2.9.1，`modernTest` 使用 3.4.3。
 没有图形环境的主机会跳过需要对应驱动的测试，应检查测试报告中的 skipped 数量。

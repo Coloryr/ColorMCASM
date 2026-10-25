@@ -1,17 +1,14 @@
 package com.coloryr;
 
-import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /** Textured overlay, using the game's LWJGL 2 or 3 at runtime. */
 final class ColoryrCursorRenderer {
-    private final Map<String, Method> methods = new HashMap<>();
+    private final ColoryrCursorGl gl;
     private final IntBuffer query = ByteBuffer.allocateDirect(64).order(ByteOrder.nativeOrder()).asIntBuffer();
     private final boolean modern;
     private final boolean coreProfile;
@@ -49,88 +46,88 @@ final class ColoryrCursorRenderer {
         samplerObjects = capability(caps, "OpenGL33") || capability(caps, "GL_ARB_sampler_objects");
         unpackBuffer = capability(caps, "OpenGL21") || capability(caps, "GL_ARB_pixel_buffer_object");
         image = ColoryrCursorImage.load();
+        ColoryrCursorBindings bindings = new ColoryrCursorBindings();
 
-        bind("integer", gl11, "glGetInteger", int.class);
-        bind("integers", gl11, lwjgl3 ? "glGetIntegerv" : "glGetInteger", int.class, IntBuffer.class);
-        bind("enabled", gl11, "glIsEnabled", int.class);
-        bind("enable", gl11, "glEnable", int.class);
-        bind("disable", gl11, "glDisable", int.class);
-        bind("viewport", gl11, "glViewport", int.class, int.class, int.class, int.class);
-        bind("colorMask", gl11, "glColorMask", boolean.class, boolean.class, boolean.class, boolean.class);
-        bind("polygonMode", gl11, "glPolygonMode", int.class, int.class);
-        bind("createShader", gl20, "glCreateShader", int.class);
-        bind("shaderSource", gl20, "glShaderSource", int.class, CharSequence.class);
-        bind("compileShader", gl20, "glCompileShader", int.class);
-        bind("shaderStatus", gl20, "glGetShaderi", int.class, int.class);
-        bind("shaderLog", gl20, "glGetShaderInfoLog", int.class, int.class);
-        bind("deleteShader", gl20, "glDeleteShader", int.class);
-        bind("createProgram", gl20, "glCreateProgram");
-        bind("attachShader", gl20, "glAttachShader", int.class, int.class);
-        bind("linkProgram", gl20, "glLinkProgram", int.class);
-        bind("programStatus", gl20, "glGetProgrami", int.class, int.class);
-        bind("programLog", gl20, "glGetProgramInfoLog", int.class, int.class);
-        bind("deleteProgram", gl20, "glDeleteProgram", int.class);
-        bind("useProgram", gl20, "glUseProgram", int.class);
-        bind("uniformLocation", gl20, "glGetUniformLocation", int.class, CharSequence.class);
-        bind("uniform2f", gl20, "glUniform2f", int.class, float.class, float.class);
-        bind("uniform1i", gl20, "glUniform1i", int.class, int.class);
-        bind("genTexture", gl11, "glGenTextures");
-        bind("bindTexture", gl11, "glBindTexture", int.class, int.class);
-        bind("deleteTexture", gl11, "glDeleteTextures", int.class);
-        bind("texParameter", gl11, "glTexParameteri", int.class, int.class, int.class);
-        bind("texImage", gl11, "glTexImage2D", int.class, int.class, int.class,
+        bindings.bind("integer", gl11, "glGetInteger", int.class);
+        bindings.bind("integers", gl11, lwjgl3 ? "glGetIntegerv" : "glGetInteger", int.class, IntBuffer.class);
+        bindings.bind("enabled", gl11, "glIsEnabled", int.class);
+        bindings.bind("enable", gl11, "glEnable", int.class);
+        bindings.bind("disable", gl11, "glDisable", int.class);
+        bindings.bind("viewport", gl11, "glViewport", int.class, int.class, int.class, int.class);
+        bindings.bind("colorMask", gl11, "glColorMask", boolean.class, boolean.class, boolean.class, boolean.class);
+        bindings.bind("polygonMode", gl11, "glPolygonMode", int.class, int.class);
+        bindings.bind("createShader", gl20, "glCreateShader", int.class);
+        bindings.bind("shaderSource", gl20, "glShaderSource", int.class, CharSequence.class);
+        bindings.bind("compileShader", gl20, "glCompileShader", int.class);
+        bindings.bind("shaderStatus", gl20, "glGetShaderi", int.class, int.class);
+        bindings.bind("shaderLog", gl20, "glGetShaderInfoLog", int.class, int.class);
+        bindings.bind("deleteShader", gl20, "glDeleteShader", int.class);
+        bindings.bind("createProgram", gl20, "glCreateProgram");
+        bindings.bind("attachShader", gl20, "glAttachShader", int.class, int.class);
+        bindings.bind("linkProgram", gl20, "glLinkProgram", int.class);
+        bindings.bind("programStatus", gl20, "glGetProgrami", int.class, int.class);
+        bindings.bind("programLog", gl20, "glGetProgramInfoLog", int.class, int.class);
+        bindings.bind("deleteProgram", gl20, "glDeleteProgram", int.class);
+        bindings.bind("useProgram", gl20, "glUseProgram", int.class);
+        bindings.bind("uniformLocation", gl20, "glGetUniformLocation", int.class, CharSequence.class);
+        bindings.bind("uniform2f", gl20, "glUniform2f", int.class, float.class, float.class);
+        bindings.bind("uniform1i", gl20, "glUniform1i", int.class, int.class);
+        bindings.bind("genTexture", gl11, "glGenTextures");
+        bindings.bind("bindTexture", gl11, "glBindTexture", int.class, int.class);
+        bindings.bind("deleteTexture", gl11, "glDeleteTextures", int.class);
+        bindings.bind("texParameter", gl11, "glTexParameteri", int.class, int.class, int.class);
+        bindings.bind("texImage", gl11, "glTexImage2D", int.class, int.class, int.class,
                 int.class, int.class, int.class, int.class, int.class, ByteBuffer.class);
-        bind("pixelStore", gl11, "glPixelStorei", int.class, int.class);
-        bind("activeTexture", Class.forName("org.lwjgl.opengl.GL13", false, loader),
+        bindings.bind("pixelStore", gl11, "glPixelStorei", int.class, int.class);
+        bindings.bind("activeTexture", Class.forName("org.lwjgl.opengl.GL13", false, loader),
                 "glActiveTexture", int.class);
         if (indexedBlend) {
             Class<?> blend = Class.forName("org.lwjgl.opengl."
                     + (capability(caps, "OpenGL40") ? "GL40" : "ARBDrawBuffersBlend"), false, loader);
             String suffix = capability(caps, "OpenGL40") ? "" : "ARB";
-            bind("blendFunc", blend, "glBlendFuncSeparatei" + suffix, int.class,
+            bindings.bind("blendFunc", blend, "glBlendFuncSeparatei" + suffix, int.class,
                     int.class, int.class, int.class, int.class);
-            bind("blendEquation", blend, "glBlendEquationSeparatei" + suffix,
+            bindings.bind("blendEquation", blend, "glBlendEquationSeparatei" + suffix,
                     int.class, int.class, int.class);
         } else {
-            bind("blendFunc", Class.forName("org.lwjgl.opengl.GL14", false, loader),
+            bindings.bind("blendFunc", Class.forName("org.lwjgl.opengl.GL14", false, loader),
                     "glBlendFuncSeparate", int.class, int.class, int.class, int.class);
-            bind("blendEquation", gl20, "glBlendEquationSeparate", int.class, int.class);
+            bindings.bind("blendEquation", gl20, "glBlendEquationSeparate", int.class, int.class);
         }
         if (samplerObjects) {
-            bind("bindSampler", Class.forName("org.lwjgl.opengl."
+            bindings.bind("bindSampler", Class.forName("org.lwjgl.opengl."
                     + (capability(caps, "OpenGL33") ? "GL33" : "ARBSamplerObjects"), false, loader),
                     "glBindSampler", int.class, int.class);
         }
         if (unpackBuffer) {
-            bind("bindBuffer", Class.forName("org.lwjgl.opengl.GL15", false, loader),
+            bindings.bind("bindBuffer", Class.forName("org.lwjgl.opengl.GL15", false, loader),
                     "glBindBuffer", int.class, int.class);
         }
 
-        coreProfile = gl32 && (integer(0x9126) & 1) != 0;
         if (modern) {
             Class<?> gl30 = Class.forName("org.lwjgl.opengl.GL30", false, loader);
-            bind("genVao", gl30, "glGenVertexArrays");
-            bind("bindVao", gl30, "glBindVertexArray", int.class);
-            bind("deleteVao", gl30, "glDeleteVertexArrays", int.class);
-            bind("fragLocation", gl30, "glBindFragDataLocation", int.class, int.class, CharSequence.class);
-            bind("framebuffer", gl30, "glBindFramebuffer", int.class, int.class);
-            bind("enabledIndexed", gl30, "glIsEnabledi", int.class, int.class);
-            bind("enableIndexed", gl30, "glEnablei", int.class, int.class);
-            bind("disableIndexed", gl30, "glDisablei", int.class, int.class);
-            bind("colorMaskIndexed", gl30, "glColorMaski",
+            bindings.bind("genVao", gl30, "glGenVertexArrays");
+            bindings.bind("bindVao", gl30, "glBindVertexArray", int.class);
+            bindings.bind("deleteVao", gl30, "glDeleteVertexArrays", int.class);
+            bindings.bind("fragLocation", gl30, "glBindFragDataLocation", int.class, int.class, CharSequence.class);
+            bindings.bind("framebuffer", gl30, "glBindFramebuffer", int.class, int.class);
+            bindings.bind("enabledIndexed", gl30, "glIsEnabledi", int.class, int.class);
+            bindings.bind("enableIndexed", gl30, "glEnablei", int.class, int.class);
+            bindings.bind("disableIndexed", gl30, "glDisablei", int.class, int.class);
+            bindings.bind("colorMaskIndexed", gl30, "glColorMaski",
                     int.class, boolean.class, boolean.class, boolean.class, boolean.class);
-            bind("draw", gl11, "glDrawArrays", int.class, int.class, int.class);
+            bindings.bind("draw", gl11, "glDrawArrays", int.class, int.class, int.class);
             framebufferTarget = 0x8CA9; // GL_DRAW_FRAMEBUFFER, leaving the read binding untouched.
         } else {
-            bind("pushCurrent", gl11, "glPushAttrib", int.class);
-            bind("popCurrent", gl11, "glPopAttrib");
-            bind("begin", gl11, "glBegin", int.class);
-            bind("end", gl11, "glEnd");
-            bind("texCoord", gl11, "glTexCoord2f", float.class, float.class);
-            bind("vertex", gl11, "glVertex2f", float.class, float.class);
+            bindings.bind("pushCurrent", gl11, "glPushAttrib", int.class);
+            bindings.bind("popCurrent", gl11, "glPopAttrib");
+            bindings.bind("begin", gl11, "glBegin", int.class);
+            bindings.bind("end", gl11, "glEnd");
+            bindings.bind("texCoord", gl11, "glTexCoord2f", float.class, float.class);
+            bindings.bind("vertex", gl11, "glVertex2f", float.class, float.class);
             if (capability(caps, "GL_EXT_framebuffer_object")) {
                 Class<?> ext = Class.forName("org.lwjgl.opengl.EXTFramebufferObject", false, loader);
-                bind("framebuffer", ext, "glBindFramebufferEXT", int.class, int.class);
+                bindings.bind("framebuffer", ext, "glBindFramebufferEXT", int.class, int.class);
                 framebufferTarget = 0x8D40;
             } else {
                 framebufferTarget = 0;
@@ -138,9 +135,11 @@ final class ColoryrCursorRenderer {
         }
         if (clipControl) {
             String type = capability(caps, "OpenGL45") ? "GL45" : "ARBClipControl";
-            bind("clipControl", Class.forName("org.lwjgl.opengl." + type, false, loader),
+            bindings.bind("clipControl", Class.forName("org.lwjgl.opengl." + type, false, loader),
                     "glClipControl", int.class, int.class);
         }
+        gl = bindings.create(ColoryrCursorGl.class, loader);
+        coreProfile = gl32 && (integer(0x9126) & 1) != 0;
 
         List<Integer> states = new ArrayList<>();
         int[] common = {0x0B71, 0x0BE2, 0x0B44, 0x0C11, 0x0B90, 0x0BF2, 0x809E, 0x80A0};
@@ -169,21 +168,21 @@ final class ColoryrCursorRenderer {
             String version = modern ? (gl32 ? "#version 150\n" : "#version 130\n") : "#version 120\n";
             vertex = shader(0x8B31, vertexSource(version));
             fragment = shader(0x8B30, fragmentSource(version));
-            program = (Integer) call("createProgram");
-            call("attachShader", program, vertex);
-            call("attachShader", program, fragment);
+            program = gl.createProgram();
+            gl.attachShader(program, vertex);
+            gl.attachShader(program, fragment);
             if (modern) {
-                call("fragLocation", program, 0, "cursorColor");
+                gl.fragLocation(program, 0, "cursorColor");
             }
-            call("linkProgram", program);
-            if ((Integer) call("programStatus", program, 0x8B82) == 0) {
-                throw new IllegalStateException("Cursor shader link: " + call("programLog", program, 4096));
+            gl.linkProgram(program);
+            if (gl.programStatus(program, 0x8B82) == 0) {
+                throw new IllegalStateException("Cursor shader link: " + gl.programLog(program, 4096));
             }
-            origin = (Integer) call("uniformLocation", program, "origin");
-            scale = (Integer) call("uniformLocation", program, "scale");
-            sampler = (Integer) call("uniformLocation", program, "cursorTexture");
+            origin = gl.uniformLocation(program, "origin");
+            scale = gl.uniformLocation(program, "scale");
+            sampler = gl.uniformLocation(program, "cursorTexture");
             if (modern) {
-                vao = (Integer) call("genVao");
+                vao = gl.genVao();
             }
             upload();
         } catch (Exception e) {
@@ -191,10 +190,10 @@ final class ColoryrCursorRenderer {
             throw e;
         } finally {
             if (vertex != 0) {
-                call("deleteShader", vertex);
+                gl.deleteShader(vertex);
             }
             if (fragment != 0) {
-                call("deleteShader", fragment);
+                gl.deleteShader(fragment);
             }
         }
     }
@@ -206,7 +205,7 @@ final class ColoryrCursorRenderer {
         int oldClipOrigin = clipControl ? integer(0x935C) : 0;
         int oldClipDepth = clipControl ? integer(0x935D) : 0;
         int oldActiveTexture = integer(0x84E0);
-        call("activeTexture", 0x84C0);
+        gl.activeTexture(0x84C0);
         int oldTexture = integer(0x8069);
         int oldSampler = samplerObjects ? integer(0x8919) : 0;
         int[] blend = {integer(0x80C9), integer(0x80C8), integer(0x80CB), integer(0x80CA),
@@ -216,32 +215,32 @@ final class ColoryrCursorRenderer {
         integers(0x0B40, polygonMode);
         for (int i = 0; i < capabilities.length; i++) {
             enabled[i] = modern && capabilities[i] == 0x0BE2
-                    ? (Boolean) call("enabledIndexed", capabilities[i], 0)
-                    : (Boolean) call("enabled", capabilities[i]);
+                    ? gl.enabledIndexed(capabilities[i], 0)
+                    : gl.enabled(capabilities[i]);
         }
         boolean pushed = false;
         try {
             if (framebufferTarget != 0) {
-                call("framebuffer", framebufferTarget, 0);
+                gl.framebuffer(framebufferTarget, 0);
             }
             if (clipControl) {
-                call("clipControl", 0x8CA1, 0x935E); // Lower-left, negative-one-to-one.
+                gl.clipControl(0x8CA1, 0x935E); // Lower-left, negative-one-to-one.
             }
-            call("viewport", 0, 0, width, height);
+            gl.viewport(0, 0, width, height);
             colorMask(true, true, true, true);
-            call("polygonMode", 0x0408, 0x1B02);
+            gl.polygonMode(0x0408, 0x1B02);
             for (int state : capabilities) {
                 enable(state, false);
             }
             enable(0x0BE2, true);
             blendFunc(0x0302, 0x0303, 1, 0x0303);
             blendEquation(0x8006, 0x8006);
-            call("bindTexture", 0x0DE1, texture);
+            gl.bindTexture(0x0DE1, texture);
             if (samplerObjects) {
-                call("bindSampler", 0, 0);
+                gl.bindSampler(0, 0);
             }
-            call("useProgram", program);
-            call("uniform1i", sampler, 0);
+            gl.useProgram(program);
+            gl.uniform1i(sampler, 0);
             float pixelX = sizeX / image.height;
             float pixelY = sizeY / image.height;
             float left = (float) (2 * (x - image.hotspotX * pixelX) / width - 1);
@@ -249,83 +248,83 @@ final class ColoryrCursorRenderer {
             float stepX = 2 * image.width * pixelX / width;
             float stepY = -2 * image.height * pixelY / height;
             if (modern) {
-                call("bindVao", vao);
-                call("uniform2f", origin, left, top);
-                call("uniform2f", scale, stepX, stepY);
-                call("draw", 0x0005, 0, 4);
+                gl.bindVao(vao);
+                gl.uniform2f(origin, left, top);
+                gl.uniform2f(scale, stepX, stepY);
+                gl.draw(0x0005, 0, 4);
             } else {
                 // Only the GL 2 compatibility path uses immediate mode.
                 // The shader consumes clip-space vertices, so no matrix stack is touched.
-                call("pushCurrent", 1);
+                gl.pushCurrent(1);
                 pushed = true;
-                call("begin", 0x0005);
+                gl.begin(0x0005);
                 try {
                     vertex(0, 0, left, top);
                     vertex(1, 0, left + stepX, top);
                     vertex(0, 1, left, top + stepY);
                     vertex(1, 1, left + stepX, top + stepY);
                 } finally {
-                    call("end");
+                    gl.end();
                 }
             }
         } finally {
             if (pushed) {
-                call("popCurrent");
+                gl.popCurrent();
             }
-            call("useProgram", oldProgram);
+            gl.useProgram(oldProgram);
             if (modern) {
-                call("bindVao", oldVao);
+                gl.bindVao(oldVao);
             }
-            call("bindTexture", 0x0DE1, oldTexture);
+            gl.bindTexture(0x0DE1, oldTexture);
             if (samplerObjects) {
-                call("bindSampler", 0, oldSampler);
+                gl.bindSampler(0, oldSampler);
             }
-            call("activeTexture", oldActiveTexture);
+            gl.activeTexture(oldActiveTexture);
             blendFunc(blend[0], blend[1], blend[2], blend[3]);
             blendEquation(blend[4], blend[5]);
             for (int i = 0; i < capabilities.length; i++) {
                 enable(capabilities[i], enabled[i]);
             }
             if (coreProfile) {
-                call("polygonMode", 0x0408, polygonMode[0]);
+                gl.polygonMode(0x0408, polygonMode[0]);
             } else {
-                call("polygonMode", 0x0404, polygonMode[0]);
-                call("polygonMode", 0x0405, polygonMode[1]);
+                gl.polygonMode(0x0404, polygonMode[0]);
+                gl.polygonMode(0x0405, polygonMode[1]);
             }
             colorMask(colorMask[0] != 0, colorMask[1] != 0, colorMask[2] != 0, colorMask[3] != 0);
-            call("viewport", viewport[0], viewport[1], viewport[2], viewport[3]);
+            gl.viewport(viewport[0], viewport[1], viewport[2], viewport[3]);
             if (clipControl) {
-                call("clipControl", oldClipOrigin, oldClipDepth);
+                gl.clipControl(oldClipOrigin, oldClipDepth);
             }
             if (framebufferTarget != 0) {
-                call("framebuffer", framebufferTarget, oldFramebuffer);
+                gl.framebuffer(framebufferTarget, oldFramebuffer);
             }
         }
     }
 
     void close() throws Exception {
         if (texture != 0) {
-            call("deleteTexture", texture);
+            gl.deleteTexture(texture);
             texture = 0;
         }
         if (vao != 0) {
-            call("deleteVao", vao);
+            gl.deleteVao(vao);
             vao = 0;
         }
         if (program != 0) {
-            call("deleteProgram", program);
+            gl.deleteProgram(program);
             program = 0;
         }
     }
 
     private void vertex(float u, float v, float x, float y) throws Exception {
-        call("texCoord", u, v);
-        call("vertex", x, y);
+        gl.texCoord(u, v);
+        gl.vertex(x, y);
     }
 
     private void upload() throws Exception {
         int active = integer(0x84E0);
-        call("activeTexture", 0x84C0);
+        gl.activeTexture(0x84C0);
         int binding = integer(0x8069);
         int buffer = unpackBuffer ? integer(0x88EF) : 0;
         int[] names = {0x0CF5, 0x0CF2, 0x0CF3, 0x0CF4};
@@ -335,96 +334,90 @@ final class ColoryrCursorRenderer {
         }
         try {
             if (unpackBuffer) {
-                call("bindBuffer", 0x88EC, 0);
+                gl.bindBuffer(0x88EC, 0);
             }
             for (int i = 0; i < names.length; i++) {
-                call("pixelStore", names[i], i == 0 ? 1 : 0);
+                gl.pixelStore(names[i], i == 0 ? 1 : 0);
             }
-            texture = (Integer) call("genTexture");
-            call("bindTexture", 0x0DE1, texture);
-            call("texParameter", 0x0DE1, 0x2801, 0x2600);
-            call("texParameter", 0x0DE1, 0x2800, 0x2600);
-            call("texParameter", 0x0DE1, 0x2802, 0x812F);
-            call("texParameter", 0x0DE1, 0x2803, 0x812F);
-            call("texImage", 0x0DE1, 0, 0x8058, image.width, image.height, 0,
+            texture = gl.genTexture();
+            gl.bindTexture(0x0DE1, texture);
+            gl.texParameter(0x0DE1, 0x2801, 0x2600);
+            gl.texParameter(0x0DE1, 0x2800, 0x2600);
+            gl.texParameter(0x0DE1, 0x2802, 0x812F);
+            gl.texParameter(0x0DE1, 0x2803, 0x812F);
+            gl.texImage(0x0DE1, 0, 0x8058, image.width, image.height, 0,
                     0x1908, 0x1401, image.pixels());
         } finally {
             for (int i = 0; i < names.length; i++) {
-                call("pixelStore", names[i], values[i]);
+                gl.pixelStore(names[i], values[i]);
             }
             if (unpackBuffer) {
-                call("bindBuffer", 0x88EC, buffer);
+                gl.bindBuffer(0x88EC, buffer);
             }
-            call("bindTexture", 0x0DE1, binding);
-            call("activeTexture", active);
+            gl.bindTexture(0x0DE1, binding);
+            gl.activeTexture(active);
         }
     }
 
     private void blendFunc(int source, int dest, int sourceAlpha, int destAlpha) throws Exception {
         if (indexedBlend) {
-            call("blendFunc", 0, source, dest, sourceAlpha, destAlpha);
+            gl.blendFunc(0, source, dest, sourceAlpha, destAlpha);
         } else {
-            call("blendFunc", source, dest, sourceAlpha, destAlpha);
+            gl.blendFunc(source, dest, sourceAlpha, destAlpha);
         }
     }
 
     private void blendEquation(int rgb, int alpha) throws Exception {
         if (indexedBlend) {
-            call("blendEquation", 0, rgb, alpha);
+            gl.blendEquation(0, rgb, alpha);
         } else {
-            call("blendEquation", rgb, alpha);
+            gl.blendEquation(rgb, alpha);
         }
     }
 
     private void enable(int state, boolean value) throws Exception {
         if (modern && state == 0x0BE2) {
-            call(value ? "enableIndexed" : "disableIndexed", state, 0);
+            if (value) gl.enableIndexed(state, 0);
+            else gl.disableIndexed(state, 0);
         } else {
-            call(value ? "enable" : "disable", state);
+            if (value) gl.enable(state);
+            else gl.disable(state);
         }
     }
 
     private void colorMask(boolean red, boolean green, boolean blue, boolean alpha) throws Exception {
         if (modern) {
-            call("colorMaskIndexed", 0, red, green, blue, alpha);
+            gl.colorMaskIndexed(0, red, green, blue, alpha);
         } else {
-            call("colorMask", red, green, blue, alpha);
+            gl.colorMask(red, green, blue, alpha);
         }
     }
 
     private int shader(int type, String source) throws Exception {
-        int shader = (Integer) call("createShader", type);
+        int shader = gl.createShader(type);
         try {
-            call("shaderSource", shader, source);
-            call("compileShader", shader);
-            if ((Integer) call("shaderStatus", shader, 0x8B81) == 0) {
-                throw new IllegalStateException("Cursor shader compile: " + call("shaderLog", shader, 4096));
+            gl.shaderSource(shader, source);
+            gl.compileShader(shader);
+            if (gl.shaderStatus(shader, 0x8B81) == 0) {
+                throw new IllegalStateException("Cursor shader compile: " + gl.shaderLog(shader, 4096));
             }
             return shader;
         } catch (Exception e) {
-            call("deleteShader", shader);
+            gl.deleteShader(shader);
             throw e;
         }
     }
 
     private int integer(int name) throws Exception {
-        return (Integer) call("integer", name);
+        return gl.integer(name);
     }
 
     private void integers(int name, int[] values) throws Exception {
         query.clear();
-        call("integers", name, query);
+        gl.integers(name, query);
         for (int i = 0; i < values.length; i++) {
             values[i] = query.get(i);
         }
-    }
-
-    private void bind(String key, Class<?> owner, String name, Class<?>... params) throws Exception {
-        methods.put(key, owner.getMethod(name, params));
-    }
-
-    private Object call(String key, Object... args) throws Exception {
-        return methods.get(key).invoke(null, args);
     }
 
     private static boolean capability(Object caps, String name) {
