@@ -4,7 +4,7 @@ plugins {
 }
 
 group = 'com.coloryr.coloryrasm'
-version = '1.2'
+version = '1.2.1'
 
 // 游戏侧最低到 Java 8（1.12.2 及更老版本），产物必须保持 52.0 的字节码
 java {

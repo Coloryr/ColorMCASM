@@ -21,8 +21,12 @@ final class ColoryrCursorImage {
     private ColoryrCursorImage(BufferedImage image, float hotspotX, float hotspotY) {
         width = image.getWidth();
         height = image.getHeight();
-        this.hotspotX = Math.max(0, Math.min(width - 1, hotspotX));
-        this.hotspotY = Math.max(0, Math.min(height - 1, hotspotY));
+        // No explicit hotspot: center the texture on the pointer. The old arrow texture
+        // relied on the top-left corner; pass hotspotX/Y=0 to get that back.
+        float centerX = Float.isNaN(hotspotX) ? width / 2f : hotspotX;
+        float centerY = Float.isNaN(hotspotY) ? height / 2f : hotspotY;
+        this.hotspotX = Math.max(0, Math.min(width - 1, centerX));
+        this.hotspotY = Math.max(0, Math.min(height - 1, centerY));
         rgba = new byte[width * height * 4];
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
@@ -84,11 +88,15 @@ final class ColoryrCursorImage {
     }
 
     private static float number(String key) {
+        String raw = System.getProperty(key);
+        if (raw == null) {
+            return Float.NaN;
+        }
         try {
-            float value = Float.parseFloat(System.getProperty(key, "0"));
-            return Float.isNaN(value) || Float.isInfinite(value) ? 0 : value;
+            float value = Float.parseFloat(raw.trim());
+            return Float.isNaN(value) || Float.isInfinite(value) ? Float.NaN : value;
         } catch (RuntimeException ignored) {
-            return 0;
+            return Float.NaN;
         }
     }
 }

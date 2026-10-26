@@ -11,7 +11,7 @@ swapchain 上覆盖贴图，并把游戏仍需要的系统光标模式临时替�
 在启动器中使用构建出来的 agent（已有 `-javaagent` 时替换原来的路径）：
 
 ```text
--javaagent:D:\project2026\ColorMCASM\build\libs\ColoryrASM-1.2-all.jar
+-javaagent:D:\project2026\ColorMCASM\build\libs\ColoryrASM-1.2.1-all.jar
 ```
 
 支持入口：
@@ -29,14 +29,16 @@ LWJGL2 的 Display / Mouse / Cursor 光标调用，以及共享 GL 渲染器的�
 可选 JVM 参数：
 
 - `-Dcoloryrasm.cursor.texture=绝对路径`：自定义 RGBA PNG
-- `-Dcoloryrasm.cursor.hotspotX=0`：热点 X
-- `-Dcoloryrasm.cursor.hotspotY=0`：热点 Y
+- `-Dcoloryrasm.cursor.hotspotX=<像素>`：热点 X，缺省为贴图宽度的一半
+- `-Dcoloryrasm.cursor.hotspotY=<像素>`：热点 Y，缺省为贴图高度的一半
 - `-Dcoloryrasm.cursor.size=24`：光标高度（8 到 128）
 - `-Dcoloryrasm.cursor.enabled=false`：禁用软件光标
 
-默认使用 JAR 内的 `coloryrasm/cursor.png`。自定义图片最大 1024×1024，保留宽高比，
-高度按窗口逻辑像素设置；热点按原始图片像素设置。高 DPI 窗口会转换到实际 framebuffer
-像素。读取自定义图片失败时恢复系统光标，并在日志中输出一次该上下文的错误。
+默认使用 JAR 内的 `coloryrasm/cursor.png`：32×32 的灰色圆环，热点在中心。
+自定义图片最大 1024×1024，保留宽高比，高度按窗口逻辑像素设置；热点按原始图片像素设置，
+不指定时同样取图片中心，旧式左上角热点的贴图显式传 `hotspotX=0` / `hotspotY=0`。
+高 DPI 窗口会转换到实际 framebuffer 像素。读取自定义图片失败时恢复系统光标，
+并在日志中输出一次该上下文的错误。
 
 Vulkan 需要支持混合的颜色附件、可执行 graphics 的呈现队列、普通单层且无旋转的交换链，
 以及一次呈现一个交换链。受保护交换链、额外的创建扩展链、共享呈现模式或不满足上述
@@ -61,7 +63,8 @@ $env:PATH = "$env:JAVA_HOME/bin;$env:PATH"
 
 本机 Windows 上三组测试实际执行通过。支持范围为上述 LWJGL2 / GLFW 入口，
 尚未逐个启动各版本 Minecraft，也未覆盖所有 mod loader 和操作系统。
-产物为 `build/libs/ColoryrASM-1.2-all.jar`，不打包 LWJGL、shaderc 或原生库。
+产物为 `build/libs/ColoryrASM-1.2.1-all.jar`，不打包 LWJGL、shaderc 或原生库。
 
-修改 GLSL 或重新生成默认 PNG 后，运行 `./gradlew.bat compileCursorAssets` 再构建。
+修改 GLSL 或默认 PNG 后，运行 `./gradlew.bat compileCursorAssets` 再构建（这个任务会
+重新生成圆环贴图与 SPIR-V）。
 预编译的 SPIR-V 随资源提交，运行游戏无需 shaderc。

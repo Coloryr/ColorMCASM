@@ -8,10 +8,15 @@ import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.vulkan.*;
 
+import java.awt.image.BufferedImage;
 import java.nio.ByteBuffer;
 import java.nio.DoubleBuffer;
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
+import javax.imageio.ImageIO;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
@@ -25,6 +30,19 @@ class VulkanCursorTest {
     void drawsIntoRealSwapchainAndPreservesBackgroundAcrossPresentAndReacquire() throws Exception {
         assumeTrue(glfwInit(), "GLFW is unavailable");
         assumeTrue(GLFWVulkan.glfwVulkanSupported(), "Vulkan is unavailable");
+        Path texture = Files.createTempFile("cursor-vk", ".png");
+        String oldTexture = System.getProperty("coloryrasm.cursor.texture");
+        String oldX = System.getProperty("coloryrasm.cursor.hotspotX");
+        String oldY = System.getProperty("coloryrasm.cursor.hotspotY");
+        BufferedImage png = new BufferedImage(2, 2, BufferedImage.TYPE_INT_ARGB);
+        png.setRGB(0, 0, 0xFF000000);
+        png.setRGB(1, 0, 0xFF000000);
+        png.setRGB(0, 1, 0xFFFFFFFF);
+        png.setRGB(1, 1, 0xFFFFFFFF);
+        ImageIO.write(png, "png", texture.toFile());
+        System.setProperty("coloryrasm.cursor.texture", texture.toString());
+        System.setProperty("coloryrasm.cursor.hotspotX", "1");
+        System.setProperty("coloryrasm.cursor.hotspotY", "1");
         try (Context context = new Context()) {
             context.create();
             boolean[] seen = new boolean[context.images.length];
@@ -62,7 +80,16 @@ class VulkanCursorTest {
             assertEquals(GLFW_CURSOR_NORMAL, glfwGetInputMode(context.window, GLFW_CURSOR));
         } finally {
             glfwTerminate();
+            restoreProperty("coloryrasm.cursor.texture", oldTexture);
+            restoreProperty("coloryrasm.cursor.hotspotX", oldX);
+            restoreProperty("coloryrasm.cursor.hotspotY", oldY);
+            Files.deleteIfExists(texture);
         }
+    }
+
+    private static void restoreProperty(String key, String value) {
+        if (value == null) System.clearProperty(key);
+        else System.setProperty(key, value);
     }
 
     private static final class Context implements AutoCloseable {

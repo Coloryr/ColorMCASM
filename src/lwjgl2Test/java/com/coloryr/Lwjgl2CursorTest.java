@@ -14,6 +14,7 @@ import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.util.CheckClassAdapter;
 
+import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.PrintWriter;
@@ -21,6 +22,10 @@ import java.io.StringWriter;
 import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
+import javax.imageio.ImageIO;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
@@ -100,6 +105,16 @@ class Lwjgl2CursorTest {
         assumeTrue((Pbuffer.getCapabilities() & Pbuffer.PBUFFER_SUPPORTED) != 0,
                 "Offscreen LWJGL 2 pbuffers are unavailable");
         Pbuffer buffer = new Pbuffer(128, 128, new PixelFormat(), null);
+        Path texture = Files.createTempFile("cursor-lwjgl2", ".png");
+        String oldTexture = System.getProperty("coloryrasm.cursor.texture");
+        String oldX = System.getProperty("coloryrasm.cursor.hotspotX");
+        String oldY = System.getProperty("coloryrasm.cursor.hotspotY");
+        BufferedImage png = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
+        png.setRGB(0, 0, 0xFFFFFFFF);
+        ImageIO.write(png, "png", texture.toFile());
+        System.setProperty("coloryrasm.cursor.texture", texture.toString());
+        System.setProperty("coloryrasm.cursor.hotspotX", "0");
+        System.setProperty("coloryrasm.cursor.hotspotY", "0");
         ColoryrCursorRenderer renderer = null;
         ContextCapabilities caps = null;
         String[] names = {"OpenGL30", "OpenGL40", "GL_ARB_draw_buffers_blend"};
@@ -143,7 +158,7 @@ class Lwjgl2CursorTest {
             assertEquals(50, values.get(2));
             assertEquals(60, values.get(3));
             assertPixel(23, 128 - 36 - 1, 255, 255, 255);
-            assertPixel(20, 128 - 36 - 1, 0, 0, 0);
+            assertPixel(20, 128 - 36 - 1, 255, 255, 255);
             assertPixel(80, 80, 64, 128, 191);
             assertEquals(GL_NO_ERROR, glGetError());
         } finally {
@@ -156,7 +171,16 @@ class Lwjgl2CursorTest {
                 }
             }
             buffer.destroy();
+            restoreProperty("coloryrasm.cursor.texture", oldTexture);
+            restoreProperty("coloryrasm.cursor.hotspotX", oldX);
+            restoreProperty("coloryrasm.cursor.hotspotY", oldY);
+            Files.deleteIfExists(texture);
         }
+    }
+
+    private static void restoreProperty(String key, String value) {
+        if (value == null) System.clearProperty(key);
+        else System.setProperty(key, value);
     }
 
     private static void assertPixel(int x, int y, int r, int g, int b) {

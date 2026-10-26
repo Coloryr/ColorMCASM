@@ -134,6 +134,16 @@ class CursorRendererTest {
         assumeTrue(glfwInit(), "GLFW is unavailable on this host");
         long window = 0;
         ColoryrCursorRenderer renderer = null;
+        Path texture = Files.createTempFile("cursor-white", ".png");
+        String oldTexture = System.getProperty("coloryrasm.cursor.texture");
+        String oldX = System.getProperty("coloryrasm.cursor.hotspotX");
+        String oldY = System.getProperty("coloryrasm.cursor.hotspotY");
+        BufferedImage png = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
+        png.setRGB(0, 0, 0xFFFFFFFF);
+        ImageIO.write(png, "png", texture.toFile());
+        System.setProperty("coloryrasm.cursor.texture", texture.toString());
+        System.setProperty("coloryrasm.cursor.hotspotX", "0");
+        System.setProperty("coloryrasm.cursor.hotspotY", "0");
         try {
             glfwDefaultWindowHints();
             glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
@@ -198,7 +208,7 @@ class CursorRendererTest {
                 assertEquals(clipDepth, glGetInteger(GL45.GL_CLIP_DEPTH_MODE));
             }
             assertPixel(23, 128 - 36 - 1, 255, 255, 255);
-            assertPixel(20, 128 - 36 - 1, 0, 0, 0);
+            assertPixel(20, 128 - 36 - 1, 255, 255, 255);
             assertPixel(80, 80, 64, 128, 191);
 
             // Exercise the window bridge and its NORMAL -> HIDDEN -> DISABLED -> NORMAL lifecycle.
@@ -229,6 +239,10 @@ class CursorRendererTest {
                 glfwDestroyWindow(window);
             }
             glfwTerminate();
+            restoreProperty("coloryrasm.cursor.texture", oldTexture);
+            restoreProperty("coloryrasm.cursor.hotspotX", oldX);
+            restoreProperty("coloryrasm.cursor.hotspotY", oldY);
+            Files.deleteIfExists(texture);
         }
     }
 

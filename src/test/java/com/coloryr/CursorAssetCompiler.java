@@ -37,24 +37,36 @@ public final class CursorAssetCompiler {
         } finally {
             Shaderc.shaderc_compiler_release(compiler);
         }
-        int[][] points = {{0, 0}, {0, 20}, {5, 15}, {9, 24}, {13, 22}, {9, 13}, {16, 13}};
-        BufferedImage image = new BufferedImage(16, 24, BufferedImage.TYPE_INT_ARGB);
-        for (int y = 0; y < 24; y++) {
-            for (int x = 0; x < 16; x++) {
-                double px = x + 0.5, py = y + 0.5, edge = 100;
-                boolean inside = false;
-                for (int i = 0; i < points.length; i++) {
-                    int[] a = points[i], b = points[(i + 1) % points.length];
-                    if ((a[1] > py) != (b[1] > py)
-                            && px < (b[0] - a[0]) * (py - a[1]) / (b[1] - a[1]) + a[0]) {
-                        inside = !inside;
+        // Default texture: the gamepad cursor ring. 32x32, outer diameter 31, 5px stroke,
+        // radial gray gradient, 55% alpha. The hotspot defaults to the texture center.
+        int size = 32;
+        double outer = 15.5;
+        double inner = outer - 5;
+        BufferedImage image = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
+        for (int y = 0; y < size; y++) {
+            for (int x = 0; x < size; x++) {
+                double sumAlpha = 0;
+                double sumValue = 0;
+                for (int sy = 0; sy < 4; sy++) {
+                    for (int sx = 0; sx < 4; sx++) {
+                        double px = x + (sx + 0.5) / 4.0;
+                        double py = y + (sy + 0.5) / 4.0;
+                        double radius = Math.hypot(px - size / 2.0, py - size / 2.0);
+                        if (radius < inner || radius > outer) {
+                            continue;
+                        }
+                        double t = (radius - inner) / (outer - inner);
+                        double value = t < 0.5
+                                ? 200 + (138 - 200) * (t / 0.5)
+                                : 138 + (78 - 138) * ((t - 0.5) / 0.5);
+                        sumAlpha += 140;
+                        sumValue += value * 140;
                     }
-                    double vx = b[0] - a[0], vy = b[1] - a[1];
-                    double t = Math.max(0, Math.min(1, ((px - a[0]) * vx + (py - a[1]) * vy) / (vx * vx + vy * vy)));
-                    edge = Math.min(edge, Math.hypot(px - a[0] - vx * t, py - a[1] - vy * t));
                 }
-                if (inside) {
-                    image.setRGB(x, y, edge >= 1 ? 0xFFFFFFFF : 0xFF000000);
+                if (sumAlpha > 0) {
+                    int alpha = (int) Math.round(sumAlpha / 16);
+                    int value = (int) Math.round(sumValue / sumAlpha);
+                    image.setRGB(x, y, (alpha << 24) | (value << 16) | (value << 8) | value);
                 }
             }
         }
