@@ -1,5 +1,6 @@
 package com.coloryr;
 
+import com.coloryr.asms.CursorAsm;
 import com.coloryr.asms.Lwjgl2Asm;
 import com.coloryr.asms.Lwjgl3Asm;
 import com.coloryr.asms.SocketAsm;
@@ -60,6 +61,7 @@ public class ColoryrASM {
         System.out.println("[ColoryrASM] start patch class");
         inst.addTransformer(new Lwjgl2Asm());
         inst.addTransformer(new Lwjgl3Asm());
+        inst.addTransformer(new CursorAsm());
         inst.addTransformer(new SocketAsm());
     }
 }
